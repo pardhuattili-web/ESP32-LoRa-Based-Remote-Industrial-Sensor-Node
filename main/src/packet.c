@@ -1,5 +1,5 @@
 #include "packet.h"
-static uint16_t crc16_step(uint16_t crc,uint8_t b){crc^=(uint16_t)b<<8;for(int i=0;i<8;i++)crc=(crc&0x8000U)?(uint16_t)((crc<<1)^0x1021U):(uint16_t)(crc<<1);return crc;}
-uint16_t packet_crc16(const uint8_t*d,size_t n){uint16_t c=0xFFFFU;for(size_t i=0;i<n;i++)c=crc16_step(c,d[i]);return c;}
-size_t packet_encode(const telemetry_packet_t*p,uint8_t*out,size_t n){if(!p||!out||n<sizeof(*p))return 0;telemetry_packet_t t=*p;t.crc16=0;const uint8_t*b=(const uint8_t*)&t;for(size_t i=0;i<sizeof(t)-2;i++)out[i]=b[i];uint16_t c=packet_crc16(out,sizeof(t)-2);out[sizeof(t)-2]=(uint8_t)(c>>8);out[sizeof(t)-1]=(uint8_t)c;return sizeof(t);}
-int packet_decode(const uint8_t*d,size_t n,telemetry_packet_t*out){if(!d||!out||n!=sizeof(*out))return -1;uint16_t got=(uint16_t)d[n-2]<<8|d[n-1];if(packet_crc16(d,n-2)!=got)return -2;for(size_t i=0;i<n;i++)((uint8_t*)out)[i]=d[i];return 0;}
+static uint16_t step(uint16_t c,uint8_t b){c^=(uint16_t)b<<8;for(int i=0;i<8;i++)c=(c&0x8000U)?(uint16_t)((c<<1)^0x1021U):(uint16_t)(c<<1);return c;}
+uint16_t packet_crc16(const uint8_t*d,size_t n){uint16_t c=0xFFFFU;for(size_t i=0;i<n;i++)c=step(c,d[i]);return c;}
+size_t packet_encode(const telemetry_packet_t*p,uint8_t*out,size_t n){if(!p||!out||n<sizeof(*p))return 0;telemetry_packet_t t=*p;t.crc16=0;for(size_t i=0;i<sizeof(t)-2;i++)out[i]=((const uint8_t*)&t)[i];uint16_t c=packet_crc16(out,sizeof(t)-2);out[sizeof(t)-2]=c>>8;out[sizeof(t)-1]=c;return sizeof(t);}
+int packet_decode(const uint8_t*d,size_t n,telemetry_packet_t*out){if(!d||!out||n!=sizeof(*out))return -1;uint16_t c=((uint16_t)d[n-2]<<8)|d[n-1];if(packet_crc16(d,n-2)!=c)return -2;for(size_t i=0;i<n;i++)((uint8_t*)out)[i]=d[i];return 0;}
