@@ -1,0 +1,1 @@
+idf_component_register(SRCS "app_main.c" "src/packet.c" "src/sensor_if.c" "src/lora_if.c" "src/node_config.c" "src/power_manager.c" "src/diagnostics.c" INCLUDE_DIRS "include")
